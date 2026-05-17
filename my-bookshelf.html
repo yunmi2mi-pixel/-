@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="나의 서재">
+<meta name="theme-color" content="#081432">
+<title>나의 서재</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #081432;
+    --navy2: #0d2e7a;
+    --navy3: #1a4db5;
+    --blue-light: #8ab4f8;
+    --bg: #f4f7ff;
+    --card-border: #dce4f7;
+    --text-muted: #8a9cc0;
+    --white: #ffffff;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html, body { height: 100%; background: var(--bg); }
+  body { font-family: 'DM Mono', monospace; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 2px; }
+
+  /* HEADER */
+  .header {
+    background: var(--navy);
+    padding: calc(var(--safe-top) + 20px) 20px 0;
+    position: sticky; top: 0; z-index: 50;
+    box-shadow: 0 4px 24px rgba(8,20,50,0.2);
+  }
+  .header-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+  .logo-sub { color: var(--blue-light); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 4px; }
+  .logo-title { color: var(--white); font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 700; }
+  .stats { display: flex; gap: 16px; align-items: center; }
+  .stat { text-align: center; }
+  .stat-num { color: var(--white); font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; line-height: 1; }
+  .stat-label { color: var(--blue-light); font-size: 9px; letter-spacing: 0.1em; margin-top: 3px; }
+  .stat-divider { width: 1px; height: 30px; background: rgba(255,255,255,0.12); }
+  .tabs { display: flex; }
+  .tab {
+    flex: 1; background: none; border: none; cursor: pointer;
+    padding: 12px 8px; font-family: 'DM Mono', monospace; font-size: 12px;
+    color: rgba(255,255,255,0.4); letter-spacing: 0.04em;
+    border-bottom: 2.5px solid transparent; transition: all 0.2s;
+  }
+  .tab.active { color: var(--white); border-bottom-color: var(--blue-light); }
+
+  /* TOOLBAR */
+  .toolbar { padding: 16px 20px 0; display: flex; gap: 10px; align-items: center; position: sticky; top: 130px; z-index: 40; background: var(--bg); padding-bottom: 12px; border-bottom: 1px solid var(--card-border); }
+  .search-wrap { position: relative; flex: 1; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; }
+  .search-input {
+    width: 100%; background: var(--white); border: 1.5px solid var(--card-border);
+    border-radius: 12px; padding: 10px 12px 10px 36px;
+    font-size: 13px; font-family: 'DM Mono', monospace; color: var(--navy);
+    outline: none; transition: border 0.2s;
+  }
+  .search-input:focus { border-color: var(--navy3); }
+  .add-btn {
+    background: var(--navy2); color: var(--white); border: none; border-radius: 12px;
+    padding: 10px 16px; font-family: 'DM Mono', monospace; font-size: 13px;
+    cursor: pointer; white-space: nowrap; box-shadow: 0 4px 14px rgba(13,46,122,0.3);
+    transition: background 0.2s; display: flex; align-items: center; gap: 6px;
+  }
+  .add-btn:active { background: var(--navy3); }
+
+  /* GRID */
+  .grid-wrap { padding: 16px 20px calc(var(--safe-bottom) + 80px); }
+  .count-label { font-size: 11px; color: var(--text-muted); margin-bottom: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+
+  /* CARD */
+  .card { background: var(--white); border-radius: 14px; border: 1.5px solid var(--card-border); overflow: hidden; cursor: pointer; transition: transform 0.18s, box-shadow 0.18s; }
+  .card:active { transform: scale(0.97); }
+  .card-img-wrap { position: relative; padding-bottom: 145%; overflow: hidden; background: var(--bg); }
+  .card-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .card-no-img { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+  .card-no-img.read { background: linear-gradient(135deg, #0d2e7a 0%, #1a4db5 100%); }
+  .card-no-img.wish { background: linear-gradient(135deg, #e8f0ff 0%, #f4f7ff 100%); }
+  .wish-badge { position: absolute; top: 8px; right: 8px; background: var(--navy2); color: var(--white); border-radius: 6px; padding: 2px 7px; font-size: 9px; letter-spacing: 0.08em; }
+  .card-body { padding: 12px 12px 8px; }
+  .card-title { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 14px; color: var(--navy); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-author { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+  .card-date { font-size: 10px; color: var(--blue-light); margin-top: 4px; }
+  .card-review { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: #4a5e8a; margin-top: 6px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-footer { padding: 0 12px 10px; display: flex; justify-content: flex-end; }
+  .del-btn { background: none; border: none; cursor: pointer; font-size: 14px; padding: 4px; color: var(--card-border); }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 60px 24px; }
+  .empty-icon { font-size: 52px; margin-bottom: 16px; }
+  .empty-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+  .empty-sub { font-size: 12px; color: var(--text-muted); }
+
+  /* MODAL OVERLAY */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(8,20,50,0.75);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    z-index: 200; display: flex; align-items: flex-end;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes popIn { from { opacity:0; transform:scale(0.92); } to { opacity:1; transform:scale(1); } }
+
+  /* BOTTOM SHEET */
+  .sheet {
+    background: var(--white); border-radius: 20px 20px 0 0;
+    width: 100%; max-height: 92vh; overflow-y: auto;
+    animation: slideUp 0.28s cubic-bezier(0.34, 1.2, 0.64, 1);
+    padding-bottom: calc(var(--safe-bottom) + 20px);
+  }
+  .sheet-handle { width: 40px; height: 4px; background: var(--card-border); border-radius: 2px; margin: 12px auto 0; }
+  .sheet-header { background: var(--navy); padding: 20px 24px 20px; }
+  .sheet-sub { color: var(--blue-light); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 4px; }
+  .sheet-title { color: var(--white); font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700; }
+  .sheet-body { padding: 20px 24px 0; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; color: var(--navy); opacity: 0.45; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+  .field input, .field textarea {
+    width: 100%; background: var(--bg); border: 1.5px solid var(--card-border);
+    border-radius: 10px; padding: 11px 13px; font-size: 15px;
+    font-family: 'DM Mono', monospace; color: var(--navy); outline: none; transition: border 0.2s;
+  }
+  .field input:focus, .field textarea:focus { border-color: var(--navy3); }
+  .field textarea { resize: none; height: 80px; }
+  .img-row { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 16px; }
+  .img-pick {
+    width: 80px; height: 115px; border-radius: 10px; flex-shrink: 0;
+    background: var(--bg); border: 2px dashed var(--card-border);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; overflow: hidden; font-size: 22px;
+  }
+  .img-pick img { width: 100%; height: 100%; object-fit: cover; }
+  .img-pick-label { font-size: 9px; color: var(--text-muted); margin-top: 4px; }
+  .img-fields { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+  .sheet-actions { display: flex; gap: 10px; padding: 16px 24px 0; }
+  .btn-cancel { flex: 1; background: var(--bg); color: var(--navy); border: none; border-radius: 12px; padding: 13px; font-family: 'DM Mono', monospace; font-size: 13px; cursor: pointer; }
+  .btn-save { flex: 2; background: var(--navy2); color: var(--white); border: none; border-radius: 12px; padding: 13px; font-family: 'DM Mono', monospace; font-size: 13px; cursor: pointer; transition: background 0.2s; }
+  .btn-save:disabled { background: var(--card-border); cursor: default; }
+  .btn-save:not(:disabled):active { background: var(--navy3); }
+
+  /* DETAIL SHEET */
+  .detail-cover-wrap { position: relative; }
+  .detail-cover-bg { background: var(--navy); padding: 28px 24px 24px; display: flex; gap: 20px; align-items: flex-start; }
+  .detail-cover-img { width: 80px; height: 115px; border-radius: 10px; object-fit: cover; box-shadow: 0 8px 24px rgba(0,0,0,0.4); flex-shrink: 0; }
+  .detail-cover-none { width: 80px; height: 115px; border-radius: 10px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 32px; flex-shrink: 0; }
+  .detail-info { flex: 1; padding-top: 4px; }
+  .detail-date-label { color: var(--blue-light); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
+  .detail-title { color: var(--white); font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; line-height: 1.25; }
+  .detail-author { color: rgba(255,255,255,0.45); font-size: 12px; margin-top: 6px; }
+  .detail-review-wrap { padding: 20px 24px 24px; }
+  .detail-review-label { color: var(--navy); opacity: 0.45; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
+  .detail-review-text { color: #0d2050; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 17px; line-height: 1.7; }
+  .detail-close { width: calc(100% - 48px); margin: 0 24px 0; background: var(--navy); color: var(--white); border: none; border-radius: 12px; padding: 13px; font-family: 'DM Mono', monospace; font-size: 13px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="logo-sub">My Reading Life</div>
+        <div class="logo-title">나의 서재</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-num" id="stat-read">0</div><div class="stat-label">완독</div></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><div class="stat-num" id="stat-year">0</div><div class="stat-label">올해</div></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><div class="stat-num" id="stat-wish">0</div><div class="stat-label">위시</div></div>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" id="tab-read" onclick="switchTab('read')">📖&nbsp;&nbsp;완독한 책</button>
+      <button class="tab" id="tab-wishlist" onclick="switchTab('wishlist')">📌&nbsp;&nbsp;읽고 싶은 책</button>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="search-input" placeholder="제목 또는 저자 검색..." oninput="renderGrid()">
+    </div>
+    <button class="add-btn" id="add-btn" onclick="openAddModal()">＋ 추가</button>
+  </div>
+
+  <!-- GRID -->
+  <div class="grid-wrap">
+    <div class="count-label" id="count-label"></div>
+    <div class="grid" id="book-grid"></div>
+    <div id="empty-state" class="empty" style="display:none">
+      <div class="empty-icon" id="empty-icon">📚</div>
+      <div class="empty-title" id="empty-title">아직 기록된 책이 없습니다</div>
+      <div class="empty-sub" id="empty-sub">완독한 책을 추가해보세요 ✨</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="overlay" id="add-overlay" style="display:none" onclick="closeAddModal()">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-sub" id="add-modal-sub">완독한 책 추가</div>
+      <div class="sheet-title">새 책 등록</div>
+    </div>
+    <div class="sheet-body">
+      <div class="img-row">
+        <div class="img-pick" id="img-pick" onclick="document.getElementById('cover-input').click()">
+          <span id="img-pick-icon">📷</span>
+          <span class="img-pick-label" id="img-pick-label">표지 추가</span>
+        </div>
+        <input type="file" id="cover-input" accept="image/*" style="display:none" onchange="handleCoverInput(event)">
+        <div class="img-fields">
+          <div class="field"><label>제목 *</label><input type="text" id="f-title" placeholder="책 제목"></div>
+          <div class="field"><label>저자</label><input type="text" id="f-author" placeholder="저자명"></div>
+        </div>
+      </div>
+      <div class="field" id="f-date-wrap"><label>읽은 날짜</label><input type="date" id="f-date"></div>
+      <div class="field" id="f-review-wrap"><label>한 줄 평</label><textarea id="f-review" placeholder="이 책에 대한 한 줄 감상을 남겨보세요"></textarea></div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" onclick="closeAddModal()">취소</button>
+      <button class="btn-save" id="btn-save" onclick="saveBook()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="overlay" id="detail-overlay" style="display:none" onclick="closeDetail()">
+  <div class="sheet" onclick="event.stopPropagation()" id="detail-sheet">
+    <div class="sheet-handle"></div>
+    <div class="detail-cover-bg">
+      <div id="detail-cover-el"></div>
+      <div class="detail-info">
+        <div class="detail-date-label" id="detail-date-label"></div>
+        <div class="detail-title" id="detail-title-el"></div>
+        <div class="detail-author" id="detail-author-el"></div>
+      </div>
+    </div>
+    <div class="detail-review-wrap" id="detail-review-wrap">
+      <div class="detail-review-label">한 줄 평</div>
+      <div class="detail-review-text" id="detail-review-el"></div>
+    </div>
+    <button class="detail-close" onclick="closeDetail()">닫기</button>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'myBookshelf_v1';
+  let currentTab = 'read';
+  let coverDataURL = null;
+  let data = { read: [], wishlist: [] };
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) data = JSON.parse(raw);
+    } catch(e) {}
+  }
+
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+  }
+
+  function getThisYear() {
+    return new Date().getFullYear().toString();
+  }
+
+  function updateStats() {
+    document.getElementById('stat-read').textContent = data.read.length;
+    document.getElementById('stat-wish').textContent = data.wishlist.length;
+    const yr = data.read.filter(b => b.readDate && b.readDate.startsWith(getThisYear())).length;
+    document.getElementById('stat-year').textContent = yr;
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tab-read').classList.toggle('active', tab === 'read');
+    document.getElementById('tab-wishlist').classList.toggle('active', tab === 'wishlist');
+    document.getElementById('add-btn').textContent = tab === 'read' ? '＋ 완독 추가' : '＋ 위시 추가';
+    document.getElementById('search-input').value = '';
+    renderGrid();
+  }
+
+  function escHtml(str) {
+    return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderGrid() {
+    const q = (document.getElementById('search-input').value||'').trim();
+    const list = data[currentTab].filter(b =>
+      b.title.includes(q) || (b.author||'').includes(q)
+    );
+    const grid = document.getElementById('book-grid');
+    const empty = document.getElementById('empty-state');
+    const count = document.getElementById('count-label');
+    count.textContent = list.length + '권의 책' + (q ? ` · "${q}" 검색 결과` : '');
+
+    if (list.length === 0) {
+      grid.innerHTML = '';
+      empty.style.display = 'block';
+      document.getElementById('empty-icon').textContent = currentTab === 'read' ? '📚' : '📌';
+      document.getElementById('empty-title').textContent = q ? '검색 결과가 없습니다' : (currentTab === 'read' ? '아직 기록된 책이 없습니다' : '위시리스트가 비어있습니다');
+      document.getElementById('empty-sub').textContent = q ? '' : (currentTab === 'read' ? '완독한 책을 추가해보세요 ✨' : '읽고 싶은 책을 추가해보세요 ✨');
+      return;
+    }
+    empty.style.display = 'none';
+
+    grid.innerHTML = list.map(b => `
+      <div class="card" onclick="openDetail('${b.id}')">
+        <div class="card-img-wrap">
+          ${b.cover
+            ? `<img class="card-img" src="${escHtml(b.cover)}" alt="${escHtml(b.title)}">`
+            : `<div class="card-no-img ${currentTab}">${currentTab === 'read' ? '📖' : '📌'}</div>`}
+          ${currentTab === 'wishlist' ? '<span class="wish-badge">WISH</span>' : ''}
+        </div>
+        <div class="card-body">
+          <div class="card-title">${escHtml(b.title)}</div>
+          ${b.author ? `<div class="card-author">${escHtml(b.author)}</div>` : ''}
+          ${b.readDate ? `<div class="card-date">${escHtml(b.readDate)}</div>` : ''}
+          ${b.review ? `<div class="card-review">"${escHtml(b.review)}"</div>` : ''}
+        </div>
+        <div class="card-footer">
+          <button class="del-btn" onclick="event.stopPropagation(); deleteBook('${b.id}')">🗑</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function openDetail(id) {
+    const book = [...data.read, ...data.wishlist].find(b => b.id === id);
+    if (!book) return;
+    document.getElementById('detail-date-label').textContent = book.readDate ? `읽은 날짜 · ${book.readDate}` : '위시리스트';
+    document.getElementById('detail-title-el').textContent = book.title;
+    document.getElementById('detail-author-el').textContent = book.author || '';
+    const coverEl = document.getElementById('detail-cover-el');
+    if (book.cover) {
+      coverEl.innerHTML = `<img class="detail-cover-img" src="${escHtml(book.cover)}" alt="${escHtml(book.title)}">`;
+    } else {
+      coverEl.innerHTML = `<div class="detail-cover-none">${book.readDate ? '📖' : '📌'}</div>`;
+    }
+    const rw = document.getElementById('detail-review-wrap');
+    if (book.review) {
+      document.getElementById('detail-review-el').textContent = `"${book.review}"`;
+      rw.style.display = 'block';
+    } else {
+      rw.style.display = 'none';
+    }
+    document.getElementById('detail-overlay').style.display = 'flex';
+  }
+
+  function closeDetail() { document.getElementById('detail-overlay').style.display = 'none'; }
+
+  function deleteBook(id) {
+    if (!confirm('이 책을 삭제할까요?')) return;
+    data.read = data.read.filter(b => b.id !== id);
+    data.wishlist = data.wishlist.filter(b => b.id !== id);
+    save(); updateStats(); renderGrid();
+  }
+
+  function openAddModal() {
+    coverDataURL = null;
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-author').value = '';
+    document.getElementById('f-review').value = '';
+    document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+    const imgPick = document.getElementById('img-pick');
+    imgPick.innerHTML = '<span id="img-pick-icon">📷</span><span class="img-pick-label" id="img-pick-label">표지 추가</span>';
+    imgPick.onclick = () => document.getElementById('cover-input').click();
+    const isRead = currentTab === 'read';
+    document.getElementById('add-modal-sub').textContent = isRead ? '완독한 책 추가' : '읽고 싶은 책 추가';
+    document.getElementById('f-date-wrap').style.display = isRead ? 'block' : 'none';
+    document.getElementById('f-review-wrap').style.display = isRead ? 'block' : 'none';
+    document.getElementById('cover-input').value = '';
+    document.getElementById('add-overlay').style.display = 'flex';
+  }
+
+  function closeAddModal() { document.getElementById('add-overlay').style.display = 'none'; }
+
+  function handleCoverInput(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      coverDataURL = ev.target.result;
+      const imgPick = document.getElementById('img-pick');
+      imgPick.innerHTML = `<img src="${escHtml(coverDataURL)}" style="width:100%;height:100%;object-fit:cover;">`;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function saveBook() {
+    const title = (document.getElementById('f-title').value||'').trim();
+    if (!title) return;
+    const book = {
+      id: Date.now().toString(),
+      title,
+      author: (document.getElementById('f-author').value||'').trim(),
+      review: currentTab === 'read' ? (document.getElementById('f-review').value||'').trim() : '',
+      readDate: currentTab === 'read' ? document.getElementById('f-date').value : null,
+      cover: coverDataURL,
+    };
+    data[currentTab].unshift(book);
+    save(); updateStats(); renderGrid(); closeAddModal();
+  }
+
+  // Init
+  load();
+  switchTab('read');
+  updateStats();
+
+  // Set today as default date
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+</script>
+</body>
+</html>
