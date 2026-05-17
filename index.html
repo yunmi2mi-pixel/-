@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>강철 오운완 기록기 v3 (달력 내장형)</title>
+    <title>강철 오운완 기록기 v3.5</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -41,7 +41,7 @@
             font-size: 22px;
         }
 
-        /* 타이머 스타일 */
+        /* ⏱️ 타이머 스타일 */
         .timer-card {
             background-color: var(--card-bg);
             border: 2px solid var(--accent-color);
@@ -103,10 +103,6 @@
             position: relative;
         }
 
-        .calendar-day:active {
-            background: #333;
-        }
-
         .calendar-day.selected {
             border: 1px solid var(--accent-color);
             background: #1b3a1b;
@@ -124,7 +120,7 @@
             border-radius: 50%;
         }
 
-        /* 분할 루틴 탭 스타일 */
+        /* 🔄 루틴 탭 스타일 */
         .routine-tabs {
             display: flex;
             gap: 5px;
@@ -147,7 +143,7 @@
             background-color: var(--accent-color);
         }
 
-        /* 운동 카드 스타일 */
+        /* 🏋️‍♂️ 운동 카드 스타일 */
         .workout-card {
             background-color: var(--card-bg);
             border-radius: 12px;
@@ -170,7 +166,27 @@
             font-weight: bold;
         }
 
-        /* 원터치 조절 UI */
+        .rest-input-box {
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+
+        .rest-edit-input {
+            width: 40px;
+            background: #121212;
+            border: 1px solid #555;
+            color: var(--accent-color);
+            text-align: center;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* 🔢 입력 조절 UI */
         .input-group {
             display: flex;
             justify-content: space-between;
@@ -215,7 +231,7 @@
             cursor: pointer;
         }
 
-        /* 히스토리 및 조말 팝업 스타일 */
+        /* 📋 기록 확인 창 */
         .history-section {
             background-color: #1a1a1a;
             border-radius: 12px;
@@ -237,8 +253,8 @@
 
 <div class="container">
     <header>
-        <h1>⚡ 강철 오운완 시스템 v3</h1>
-        <p style="color: var(--text-muted); margin: 5px 0 0 0;">3분할 루틴 & 히스토리 달력</p>
+        <h1>⚡ 강철 오운완 시스템 v3.5</h1>
+        <p style="color: var(--text-muted); margin: 5px 0 0 0;">휴식 시간 실시간 커스텀</p>
     </header>
 
     <div class="timer-card">
@@ -271,15 +287,12 @@
     let timerInterval = null;
     let currentRoutine = 'push';
     
-    // 날짜별 기록을 저장할 객체 (날짜 문자열을 키로 사용, 예: '2026-05-17')
-    // 브라우저를 껐다 켜도 유지되도록 로컬 스토리지 연동
     let database = JSON.parse(localStorage.getItem('workout_db')) || {};
     
-    // 오늘 날짜 구하기 (YYYY-MM-DD 형식)
     const todayStr = getFormattedDate(new Date());
-    let selectedDateStr = todayStr; // 기본 선택은 오늘
+    let selectedDateStr = todayStr;
 
-    // 3대 운동 및 형님 루틴 12종목 3분할 데이터 구성
+    // 운동 데이터 구조에 기본 초 단위 설정 유지
     const routineData = {
         push: [
             { id: 'p1', name: '2. 벤치프레스 (Bench Press)', weight: 60, reps: 7, rest: 180, weightUnit: 5 },
@@ -301,12 +314,10 @@
         ]
     };
 
-    // 초기 구동
     initCalendar();
     renderWorkouts();
     showHistoryAt(todayStr);
 
-    // YYYY-MM-DD 변환 함수
     function getFormattedDate(date) {
         const yyyy = date.getFullYear();
         const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -314,7 +325,6 @@
         return `${yyyy}-${mm}-${dd}`;
     }
 
-    // 📅 달력 생성 시스템
     function initCalendar() {
         const now = new Date();
         document.getElementById('calendarMonthYear').innerText = `${now.getFullYear()}년 ${now.getMonth() + 1}월`;
@@ -322,7 +332,6 @@
         const grid = document.getElementById('calendarGrid');
         grid.innerHTML = '';
 
-        // 요일 라벨 깔기
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         days.forEach(d => {
             const label = document.createElement('div');
@@ -331,16 +340,13 @@
             grid.appendChild(label);
         });
 
-        // 이번 달 날짜 채우기 (현재 날짜 기준 전후 일주일 가독성 집중용 단순화 버전)
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         
-        // 공백 맞추기
         for(let i=0; i<startOfMonth.getDay(); i++) {
             grid.appendChild(document.createElement('div'));
         }
 
-        // 날짜 뿌리기
         for(let d=1; d<=endOfMonth.getDate(); d++) {
             const dayBox = document.createElement('div');
             dayBox.className = 'calendar-day';
@@ -348,12 +354,10 @@
             
             const targetDateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
             
-            // 데이터가 있는 날 표시 점 추가
             if (database[targetDateStr] && database[targetDateStr].length > 0) {
                 dayBox.classList.add('has-log');
             }
 
-            // 오늘 날짜 및 선택 표시
             if (targetDateStr === selectedDateStr) {
                 dayBox.classList.add('selected');
             }
@@ -369,7 +373,6 @@
         }
     }
 
-    // 탭 전환 기능
     function switchRoutine(routineType, btnElement) {
         currentRoutine = routineType;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -377,7 +380,6 @@
         renderWorkouts();
     }
 
-    // 운동 카드 생성 렌더러
     function renderWorkouts() {
         const container = document.getElementById('workoutContainer');
         container.innerHTML = '';
@@ -385,13 +387,15 @@
         routineData[currentRoutine].forEach(w => {
             const card = document.createElement('div');
             card.className = 'workout-card';
-            
-            const restText = w.rest >= 60 ? `${Math.floor(w.rest/60)}분` : `${w.rest}초`;
 
             card.innerHTML = `
                 <div class="workout-header">
                     <div class="workout-title">${w.name}</div>
-                    <span class="rest-tag" style="background:#333; color:var(--accent-color); padding:3px 6px; border-radius:4px; font-size:12px;">휴식: ${restText}</span>
+                    <div class="rest-input-box">
+                        <span>휴식:</span>
+                        <input type="number" class="rest-edit-input" value="${w.rest}" onchange="updateRestTime('${w.id}', this.value)">
+                        <span>초</span>
+                    </div>
                 </div>
                 
                 <div class="input-group">
@@ -408,13 +412,18 @@
                     <button class="counter-btn" onclick="adjustValue('${w.id}', 'reps', 1)">+1</button>
                 </div>
 
-                <button class="log-btn" onclick="logSet('${w.id}', '${w.name}', ${w.rest})">세트 완료</button>
+                <button class="log-btn" onclick="logSet('${w.id}', '${w.name}')">세트 완료</button>
             `;
             container.appendChild(card);
         });
     }
 
-    // 수치 조절기
+    // ⏱️ 휴식 시간 데이터 실시간 반영 함수
+    function updateRestTime(id, newSeconds) {
+        const item = routineData[currentRoutine].find(w => w.id === id);
+        item.rest = parseInt(newSeconds) || 0;
+    }
+
     function adjustValue(id, key, amount) {
         const item = routineData[currentRoutine].find(w => w.id === id);
         item[key] += amount;
@@ -422,15 +431,13 @@
         document.getElementById(`${id}-${key}`).innerText = item[key] + (key === 'weight' ? ' kg' : ' 회');
     }
 
-    // 세트 완료 시 데이터 베이스 저장 및 타이머 작동
-    function logSet(id, name, restSeconds) {
+    function logSet(id, name) {
         const item = routineData[currentRoutine].find(w => w.id === id);
         
         if (!database[selectedDateStr]) {
             database[selectedDateStr] = [];
         }
 
-        // 해당 날짜에 세트 데이터 누적
         database[selectedDateStr].push({
             name: name,
             weight: item.weight,
@@ -438,16 +445,13 @@
             time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
         });
 
-        // 로컬 저장소에 세이브
         localStorage.setItem('workout_db', JSON.stringify(database));
         
-        // UI 갱신
         initCalendar();
         showHistoryAt(selectedDateStr);
-        startTimer(restSeconds);
+        startTimer(item.rest); // 수정된 휴식 시간이 여기에 바로 적용됩니다!
     }
 
-    // 특정 날짜의 히스토리 내역을 화면에 뿌려주는 함수
     function showHistoryAt(dateStr) {
         document.getElementById('historyTitle').innerText = `📅 ${dateStr}의 기록`;
         const content = document.getElementById('historyContent');
@@ -469,7 +473,6 @@
         });
     }
 
-    // 타이머 구동 시스템
     function startTimer(seconds) {
         clearInterval(timerInterval);
         let timeLeft = seconds;
