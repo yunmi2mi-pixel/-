@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>철원 전사 - 강철 오운완 기록기</title>
+    <title>철원 전사 - 강철 오운완 기록기 v2</title>
     <style>
         :root {
             --bg-color: #121212;
             --card-bg: #1e1e1e;
-            --accent-color: #4caf50; /* 헬창의 상징 국방색/초록색 */
+            --accent-color: #4caf50;
             --text-color: #ffffff;
             --text-muted: #aaaaaa;
+            --danger-color: #e57373;
         }
 
         body {
@@ -48,13 +49,48 @@
             padding: 15px;
             text-align: center;
             margin-bottom: 20px;
+            position: sticky;
+            top: 10px;
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
 
         .timer-display {
             font-size: 3rem;
             font-weight: bold;
-            margin: 10px 0;
+            margin: 5px 0;
             font-variant-numeric: tabular-nums;
+        }
+
+        /* 운동 추가 세션 */
+        .add-workout-card {
+            background-color: #252525;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px dashed var(--accent-color);
+        }
+
+        .add-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #121212;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .add-btn {
+            width: 100%;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
         }
 
         /* 운동 카드 스타일 */
@@ -62,8 +98,9 @@
             background-color: var(--card-bg);
             border-radius: 12px;
             padding: 20px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            position: relative;
         }
 
         .workout-header {
@@ -80,12 +117,12 @@
             font-weight: bold;
         }
 
-        .rest-tag {
-            background-color: #333;
-            color: var(--accent-color);
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
+        .delete-workout-btn {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            font-size: 14px;
         }
 
         /* 원터치 조절 UI */
@@ -93,11 +130,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .control-label {
-            width: 50px;
+            width: 60px;
             font-weight: bold;
             color: var(--text-muted);
         }
@@ -119,13 +156,12 @@
         }
 
         .value-display {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
-            width: 80px;
+            width: 90px;
             text-align: center;
         }
 
-        /* 세트 완료 버튼 */
         .log-btn {
             width: 100%;
             background-color: var(--accent-color);
@@ -136,24 +172,53 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .log-btn:important {
-            background-color: #439a46;
-        }
-
-        /* 로그 기록 영역 */
-        .log-history {
             margin-top: 10px;
-            font-size: 14px;
-            color: var(--text-muted);
-            text-align: left;
-            max-height: 100px;
-            overflow-y: auto;
+        }
+
+        /* 세트 수정 가능한 로그 영역 */
+        .log-history {
+            margin-top: 15px;
             background: #151515;
-            padding: 8px;
-            border-radius: 6px;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .log-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid #222;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-edit-inputs {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .edit-input {
+            width: 45px;
+            background: #222;
+            border: 1px solid #444;
+            color: white;
+            text-align: center;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .remove-set-btn {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 5px;
         }
     </style>
 </head>
@@ -161,150 +226,100 @@
 
 <div class="container">
     <header>
-        <h1>⚡ 백골 전사 PUSH/PULL/LEG 기록기</h1>
-        <p style="color: var(--text-muted); margin: 5px 0 0 0;">땀은 배신하지 않는다</p>
+        <h1>⚡ 강철 오운완 기록기 v2</h1>
+        <p style="color: var(--text-muted); margin: 5px 0 0 0;">점진적 과부하 무한 동력</p>
     </header>
 
     <div class="timer-card">
         <div style="font-size: 14px; color: var(--text-muted);">스마트 휴식 타이머</div>
         <div class="timer-display" id="timerDisplay">00:00</div>
-        <div style="color: var(--accent-color); font-size: 12px; font-weight: bold;" id="timerStatus">대기 중</div>
+        <div style="color: var(--accent-color); font-size: 13px; font-weight: bold;" id="timerStatus">대기 중</div>
     </div>
 
-    <div class="workout-card" id="card-squat">
-        <div class="workout-header">
-            <div class="workout-title">백 스쿼트</div>
-            <div class="rest-tag">추천 휴식: 4분</div>
-        </div>
-        
-        <div class="input-group">
-            <div class="control-label">무게</div>
-            <button class="counter-btn" onclick="changeValue('squat-weight', -5)">-5</button>
-            <div class="value-display" id="squat-weight-display">90 kg</div>
-            <button class="counter-btn" onclick="changeValue('squat-weight', 5)">+5</button>
-        </div>
-
-        <div class="input-group">
-            <div class="control-label">횟수</div>
-            <button class="counter-btn" onclick="changeValue('squat-reps', -1)">-1</button>
-            <div class="value-display" id="squat-reps-display">5 회</div>
-            <button class="counter-btn" onclick="changeValue('squat-reps', 1)">+1</button>
-        </div>
-
-        <button class="log-btn" onclick="completeSet('백 스쿼트', 'squat-weight', 'squat-reps', 240)">세트 완료 (4분 휴식 시작)</button>
-        <div class="log-history" id="squat-log"></div>
+    <div class="add-workout-card">
+        <div style="font-weight: bold; margin-bottom: 10px; color: var(--accent-color);">＋ 새로운 운동 추가</div>
+        <input type="text" id="newWorkoutName" class="add-input" placeholder="예: 벤치프레스, 데드리프트">
+        <input type="number" id="newWorkoutRest" class="add-input" placeholder="휴식 시간 설정 (초 단위, 예: 60, 240)" value="60">
+        <button class="add-btn" onclick="addNewWorkout()">루틴에 운동 추가</button>
     </div>
 
-    <div class="workout-card" id="card-sarere">
-        <div class="workout-header">
-            <div class="workout-title">사이드 레터럴 레이즈</div>
-            <div class="rest-tag">추천 휴식: 1분</div>
-        </div>
-        
-        <div class="input-group">
-            <div class="control-label">무게</div>
-            <button class="counter-btn" onclick="changeValue('sarere-weight', -1)">-1</button>
-            <div class="value-display" id="sarere-weight-display">4 kg</div>
-            <button class="counter-btn" onclick="changeValue('sarere-weight', 1)">+1</button>
-        </div>
-
-        <div class="input-group">
-            <div class="control-label">횟수</div>
-            <button class="counter-btn" onclick="changeValue('sarere-reps', -5)">-5</button>
-            <div class="value-display" id="sarere-reps-display">20 회</div>
-            <button class="counter-btn" onclick="changeValue('sarere-reps', 5)">+5</button>
-        </div>
-
-        <button class="log-btn" onclick="completeSet('사레레', 'sarere-weight', 'sarere-reps', 60)">세트 완료 (1분 휴식 시작)</button>
-        <div class="log-history" id="sarere-log"></div>
-    </div>
+    <div id="workoutContainer"></div>
 </div>
 
 <script>
-    // 현재 입력값 상태 관리
-    const state = {
-        'squat-weight': 90,
-        'squat-reps': 5,
-        'sarere-weight': 4,
-        'sarere-reps': 20
-    };
-
-    // 세트 수 카운터
-    const setCounters = {
-        '백 스쿼트': 1,
-        '사레레': 1
-    };
-
-    // 타이머 변수
+    // 전역 타이머 관리 변수
     let timerInterval = null;
 
-    // 버튼 클릭 시 무게/횟수 변경 및 화면 업데이트
-    function changeValue(key, amount) {
-        state[key] += amount;
-        if (state[key] < 0) state[key] = 0; // 음수 방지
+    // 초기 기본 데이터 (형님 기본 루틴 자동 세팅)
+    let workouts = [
+        { id: 'w1', name: '백 스쿼트', weight: 90, reps: 5, rest: 240, logs: [] },
+        { id: 'w2', name: '사이드 레터럴 레이즈', weight: 4, reps: 20, rest: 60, logs: [] }
+    ];
+
+    // 앱 시작 시 화면 그리기
+    renderWorkouts();
+
+    // 1. 운동 추가 기능
+    function addNewWorkout() {
+        const nameInput = document.getElementById('newWorkoutName');
+        const restInput = document.getElementById('newWorkoutRest');
         
-        const unit = key.includes('weight') ? ' kg' : ' 회';
-        document.getElementById(`${key}-display`).innerText = state[key] + unit;
-    }
-
-    // 세트 완료 처리 및 타이머 연동
-    function completeSet(workoutName, weightKey, repsKey, restSeconds) {
-        const weight = state[weightKey];
-        const reps = state[repsKey];
-        const currentSet = setCounters[workoutName];
-
-        // 1. 로그 기록 추가
-        const logId = weightKey.split('-')[0] + '-log';
-        const logContainer = document.getElementById(logId);
-        const logEntry = document.createElement('div');
-        logEntry.innerText = `[${currentSet}세트] ${weight}kg x ${reps}회 완료!`;
-        logContainer.appendChild(logEntry);
-        
-        // 스크롤 아래로 고정
-        logContainer.scrollTop = logContainer.scrollHeight;
-        
-        // 세트 수 증가
-        setCounters[workoutName]++;
-
-        // 2. 스마트 타이머 가동
-        startTimer(restSeconds);
-    }
-
-    // 타이머 구동 함수
-    function startTimer(seconds) {
-        clearInterval(timerInterval);
-        let timeLeft = seconds;
-        const display = document.getElementById('timerDisplay');
-        const status = document.getElementById('timerStatus');
-        
-        status.innerText = "🔥 근육 회복 중... 다음 세트 준비! 🔥";
-        status.style.color = "#ff9800";
-
-        function updateTimerDisplay() {
-            const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            const secs = (timeLeft % 60).toString().padStart(2, '0');
-            display.innerText = `${mins}:${secs}`;
+        if (!nameInput.value.trim()) {
+            alert('운동 이름을 입력하십시오!');
+            return;
         }
 
-        updateTimerDisplay();
+        const newId = 'w_' + Date.now();
+        workouts.push({
+            id: newId,
+            name: nameInput.value.trim(),
+            weight: 60, // 기본 초깃값
+            reps: 10,
+            rest: parseInt(restInput.value) || 60,
+            logs: []
+        });
 
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            updateTimerDisplay();
-
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                display.innerText = "00:00";
-                status.innerText = "💪 휴식 끝! 당장 바벨 잡으십시오! 💪";
-                status.style.color = "#4caf50";
-                
-                // 군대 느낌 진동 알림 (모바일 전용 기능)
-                if (navigator.vibrate) {
-                    navigator.vibrate([500, 200, 500]);
-                }
-            }
-        }, 1000);
+        nameInput.value = '';
+        renderWorkouts();
     }
-</script>
-</body>
-</html>
+
+    // 2. 운동 삭제 기능
+    function deleteWorkout(id) {
+        if(confirm("이 운동을 루틴에서 완전히 삭제하시겠습니까?")) {
+            workouts = workouts.filter(w => w.id !== id);
+            renderWorkouts();
+        }
+    }
+
+    // 3. 화면 UI 렌더링 함수
+    function renderWorkouts() {
+        const container = document.getElementById('workoutContainer');
+        container.innerHTML = '';
+
+        workouts.forEach(w => {
+            const card = document.createElement('div');
+            card.className = 'workout-card';
+            
+            // 분 단위 가독성 계산
+            const restMin = Math.floor(w.rest / 60);
+            const restSec = w.rest % 60;
+            const restText = restSec > 0 ? `${restMin}분 ${restSec}초` : `${restMin}분`;
+
+            let logHtml = '';
+            w.logs.forEach((log, index) => {
+                logHtml += `
+                    <div class="log-entry">
+                        <span>[${index + 1}세트]</span>
+                        <div class="log-edit-inputs">
+                            <input type="number" class="edit-input" value="${log.weight}" onchange="updateLog('${w.id}', ${index}, 'weight', this.value)"> kg x 
+                            <input type="number" class="edit-input" value="${log.reps}" onchange="updateLog('${w.id}', ${index}, 'reps', this.value)"> 회
+                            <button class="remove-set-btn" onclick="deleteLog('${w.id}', ${index})">×</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            card.innerHTML = `
+                <div class="workout-header">
+                    <div class="workout-title">${w.name}</div>
+                    <div>
