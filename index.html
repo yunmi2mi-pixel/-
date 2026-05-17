@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>강철 오운완 시스템 v4.5</title>
+    <title>강철 오운완 시스템 v5.0</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -310,9 +310,16 @@
         .log-entry {
             display: flex;
             justify-content: space-between;
-            padding: 6px 0;
+            padding: 10px;
             border-bottom: 1px solid #252525;
             font-size: 14px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .log-entry:active {
+            background: #2a1a1a; /* 터치 시 붉은 빛으로 피드백 */
         }
     </style>
 </head>
@@ -320,8 +327,8 @@
 
 <div class="container">
     <header>
-        <h1>⚡ 강철 오운완 시스템 v4.5</h1>
-        <p style="color: var(--text-muted); margin: 5px 0 0 0;">맨몸 운동 완벽 커스텀</p>
+        <h1>⚡ 강철 오운완 시스템 v5.0</h1>
+        <p style="color: var(--text-muted); margin: 5px 0 0 0;">터치하여 오기입 세트 삭제</p>
     </header>
 
     <div class="timer-card">
@@ -337,7 +344,8 @@
     </div>
 
     <div class="history-section">
-        <div style="font-weight: bold; color: var(--accent-color); margin-bottom: 10px;" id="historyTitle">오늘의 기록</div>
+        <div style="font-weight: bold; color: var(--accent-color); margin-bottom: 5px;" id="historyTitle">오늘의 기록</div>
+        <div style="font-size: 11px; color: var(--danger-color); margin-bottom: 10px;">⚠️ 잘못 기록된 세트는 터치하면 삭제할 수 있습니다.</div>
         <div id="historyContent" style="color: var(--text-muted); font-size: 14px;">선택한 날짜에 기록된 운동이 없습니다.</div>
     </div>
 
@@ -367,7 +375,6 @@
     
     let database = JSON.parse(localStorage.getItem('workout_db')) || {};
     
-    // 초기 기본 데이터에 맨몸 운동 유무(isBodyweight) 필드 추가
     const defaultRoutine = {
         push: [
             { id: 'p1', name: '2. 벤치프레스 (Bench Press)', weight: 60, reps: 7, rest: 180, weightUnit: 5, isBodyweight: false },
@@ -467,7 +474,6 @@
         document.getElementById('addTitle').innerText = `＋ [${titles[currentRoutine]}] 루틴에 운동 추가`;
     }
 
-    // ➕ 운동 추가 시스템 (맨몸 옵션 연동)
     function addNewWorkout() {
         const nameInput = document.getElementById('newWorkoutName');
         const restInput = document.getElementById('newWorkoutRest');
@@ -494,11 +500,10 @@
 
         localStorage.setItem('routine_db', JSON.stringify(routineData));
         nameInput.value = '';
-        isBodyweightCheck.checked = false; // 체크박스 초기화
+        isBodyweightCheck.checked = false;
         renderWorkouts();
     }
 
-    // ❌ 운동 제거 시스템
     function deleteWorkout(id) {
         if(confirm("이 운동 종목을 현재 루틴에서 완전히 빼시겠습니까?")) {
             routineData[currentRoutine] = routineData[currentRoutine].filter(w => w.id !== id);
@@ -520,7 +525,6 @@
             const card = document.createElement('div');
             card.className = 'workout-card';
 
-            // 맨몸 운동일 경우 무게 조절 UI를 지우고 '맨몸 수행'으로 표시
             let weightSection = '';
             if (w.isBodyweight) {
                 weightSection = `
@@ -589,7 +593,6 @@
             database[selectedDateStr] = [];
         }
 
-        // 달력 기록 저장 시 맨몸 운동은 '맨몸'으로 표기되도록 분기 처리
         const weightText = item.isBodyweight ? '맨몸' : `${item.weight}kg`;
 
         database[selectedDateStr].push({
@@ -606,6 +609,7 @@
         startTimer(item.rest);
     }
 
+    // 📋 기록 화면 출력 및 터치 삭제 바인딩
     function showHistoryAt(dateStr) {
         document.getElementById('historyTitle').innerText = `📅 ${dateStr}의 기록`;
         const content = document.getElementById('historyContent');
@@ -623,8 +627,35 @@
                 <span>${log.name}</span>
                 <span style="color:var(--accent-color); font-weight:bold;">${log.weightDisplay} x ${log.reps}회 <small style="color:#666; font-weight:normal;">(${log.time})</small></span>
             `;
+            
+            // ❌ 개별 기록 터치 시 삭제 연동
+            row.onclick = () => {
+                if (confirm(`"${log.name} (${log.weightDisplay} x ${log.reps}회)" 기록을 지우시겠습니까?`)) {
+                    removeLogEntry(dateStr, idx);
+                }
+            };
+
             content.appendChild(row);
         });
+    }
+
+    // ❌ 데이터베이스에서 개별 세트 삭제 처리 함수
+    function removeLogEntry(dateStr, index) {
+        if (database[dateStr]) {
+            database[dateStr].splice(index, 1); // 배열에서 해당 기록 삭제
+            
+            // 만약 그날 모든 기록이 지워졌다면 해당 날짜 키 자체를 삭제
+            if (database[dateStr].length === 0) {
+                delete database[dateStr];
+            }
+            
+            // 로컬 스토리지에 최종 반영
+            localStorage.setItem('workout_db', JSON.stringify(database));
+            
+            // 형님이 생각하신 대로 달력과 하단 기록 레이아웃을 동시 새로고침!
+            initCalendar();
+            showHistoryAt(dateStr);
+        }
     }
 
     function startTimer(seconds) {
