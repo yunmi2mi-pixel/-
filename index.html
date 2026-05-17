@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>강철 오운완 기록기 v3.5</title>
+    <title>강철 오운완 시스템 v4.5</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -120,6 +120,46 @@
             border-radius: 50%;
         }
 
+        /* ➕ 운동 추가 카드 */
+        .add-workout-card {
+            background-color: #252525;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px dashed var(--accent-color);
+        }
+
+        .add-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #121212;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .add-btn {
+            width: 100%;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         /* 🔄 루틴 탭 스타일 */
         .routine-tabs {
             display: flex;
@@ -164,6 +204,13 @@
         .workout-title {
             font-size: 16px;
             font-weight: bold;
+            max-width: 60%;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .rest-input-box {
@@ -172,17 +219,26 @@
             border-radius: 6px;
             display: flex;
             align-items: center;
-            gap: 5px;
-            font-size: 12px;
+            gap: 3px;
+            font-size: 11px;
         }
 
         .rest-edit-input {
-            width: 40px;
+            width: 35px;
             background: #121212;
             border: 1px solid #555;
             color: var(--accent-color);
             text-align: center;
             border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            font-size: 12px;
             font-weight: bold;
         }
 
@@ -219,6 +275,17 @@
             text-align: center;
         }
 
+        .bodyweight-display {
+            font-size: 18px;
+            font-weight: bold;
+            width: 170px;
+            text-align: center;
+            color: var(--accent-color);
+            background: #151515;
+            padding: 8px 0;
+            border-radius: 8px;
+        }
+
         .log-btn {
             width: 100%;
             background-color: var(--accent-color);
@@ -253,8 +320,8 @@
 
 <div class="container">
     <header>
-        <h1>⚡ 강철 오운완 시스템 v3.5</h1>
-        <p style="color: var(--text-muted); margin: 5px 0 0 0;">휴식 시간 실시간 커스텀</p>
+        <h1>⚡ 강철 오운완 시스템 v4.5</h1>
+        <p style="color: var(--text-muted); margin: 5px 0 0 0;">맨몸 운동 완벽 커스텀</p>
     </header>
 
     <div class="timer-card">
@@ -280,6 +347,17 @@
         <button class="tab-btn" onclick="switchRoutine('leg', this)">3일차: LEG/코어</button>
     </div>
 
+    <div class="add-workout-card">
+        <div style="font-weight: bold; margin-bottom: 10px; color: var(--accent-color);" id="addTitle">현재 탭에 운동 추가</div>
+        <input type="text" id="newWorkoutName" class="add-input" placeholder="예: 벤치프레스, 턱걸이, 크런치">
+        <input type="number" id="newWorkoutRest" class="add-input" placeholder="휴식 시간 (초 단위, 예: 60, 120)" value="60">
+        <div class="checkbox-group">
+            <input type="checkbox" id="isBodyweight">
+            <label for="isBodyweight">⚠️ 무게 없는 맨몸 운동 (턱걸이, 크런치 등)</label>
+        </div>
+        <button class="add-btn" onclick="addNewWorkout()">선택된 루틴에 추가</button>
+    </div>
+
     <div id="workoutContainer"></div>
 </div>
 
@@ -289,33 +367,36 @@
     
     let database = JSON.parse(localStorage.getItem('workout_db')) || {};
     
+    // 초기 기본 데이터에 맨몸 운동 유무(isBodyweight) 필드 추가
+    const defaultRoutine = {
+        push: [
+            { id: 'p1', name: '2. 벤치프레스 (Bench Press)', weight: 60, reps: 7, rest: 180, weightUnit: 5, isBodyweight: false },
+            { id: 'p2', name: '5. 밀리터리 프레스 (OHP)', weight: 40, reps: 6, rest: 120, weightUnit: 5, isBodyweight: false },
+            { id: 'p3', name: '4. 인클라인 덤벨 프레스', weight: 15, reps: 15, rest: 120, weightUnit: 1, isBodyweight: false },
+            { id: 'p4', name: '6. 사이드 레터럴 레이즈', weight: 4, reps: 20, rest: 60, weightUnit: 1, isBodyweight: false },
+            { id: 'p5', name: '7. 덤벨 펙덱플라이', weight: 8, reps: 15, rest: 60, weightUnit: 1, isBodyweight: false }
+        ],
+        pull: [
+            { id: 'l1', name: '3. 데드리프트 (Deadlift)', weight: 120, reps: 5, rest: 240, weightUnit: 5, isBodyweight: false },
+            { id: 'l2', name: '8. 턱걸이 (Pull-ups)', weight: 0, reps: 5, rest: 120, weightUnit: 1, isBodyweight: true },
+            { id: 'l3', name: '9. 바벨 로우', weight: 50, reps: 8, rest: 120, weightUnit: 5, isBodyweight: false }
+        ],
+        leg: [
+            { id: 'g1', name: '1. 백 스쿼트 (Back Squat)', weight: 90, reps: 5, rest: 240, weightUnit: 5, isBodyweight: false },
+            { id: 'g2', name: '12. 런지 (Lunge)', weight: 0, reps: 12, rest: 90, weightUnit: 1, isBodyweight: false },
+            { id: 'g3', name: '10. 행잉 레그레이즈', weight: 0, reps: 15, rest: 60, weightUnit: 1, isBodyweight: true },
+            { id: 'g4', name: '11. 크런치', weight: 0, reps: 20, rest: 60, weightUnit: 1, isBodyweight: true }
+        ]
+    };
+    
+    let routineData = JSON.parse(localStorage.getItem('routine_db')) || defaultRoutine;
+
     const todayStr = getFormattedDate(new Date());
     let selectedDateStr = todayStr;
 
-    // 운동 데이터 구조에 기본 초 단위 설정 유지
-    const routineData = {
-        push: [
-            { id: 'p1', name: '2. 벤치프레스 (Bench Press)', weight: 60, reps: 7, rest: 180, weightUnit: 5 },
-            { id: 'p2', name: '5. 밀리터리 프레스 (OHP)', weight: 40, reps: 6, rest: 120, weightUnit: 5 },
-            { id: 'p3', name: '4. 인클라인 덤벨 프레스', weight: 15, reps: 15, rest: 120, weightUnit: 1 },
-            { id: 'p4', name: '6. 사이드 레터럴 레이즈', weight: 4, reps: 20, rest: 60, weightUnit: 1 },
-            { id: 'p5', name: '7. 덤벨 펙덱플라이', weight: 8, reps: 15, rest: 60, weightUnit: 1 }
-        ],
-        pull: [
-            { id: 'l1', name: '3. 데드리프트 (Deadlift)', weight: 120, reps: 5, rest: 240, weightUnit: 5 },
-            { id: 'l2', name: '8. 턱걸이 (Pull-ups)', weight: 0, reps: 5, rest: 120, weightUnit: 1 },
-            { id: 'l3', name: '9. 바벨 로우', weight: 50, reps: 8, rest: 120, weightUnit: 5 }
-        ],
-        leg: [
-            { id: 'g1', name: '1. 백 스쿼트 (Back Squat)', weight: 90, reps: 5, rest: 240, weightUnit: 5 },
-            { id: 'g2', name: '12. 런지 (Lunge)', weight: 0, reps: 12, rest: 90, weightUnit: 1 },
-            { id: 'g3', name: '10. 행잉 레그레이즈', weight: 0, reps: 15, rest: 60, weightUnit: 1 },
-            { id: 'g4', name: '11. 크런치', weight: 0, reps: 20, rest: 60, weightUnit: 1 }
-        ]
-    };
-
     initCalendar();
     renderWorkouts();
+    updateAddTitle();
     showHistoryAt(todayStr);
 
     function getFormattedDate(date) {
@@ -377,33 +458,102 @@
         currentRoutine = routineType;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btnElement.classList.add('active');
+        updateAddTitle();
         renderWorkouts();
+    }
+
+    function updateAddTitle() {
+        const titles = { push: '1일차: PUSH', pull: '2일차: PULL', leg: '3일차: LEG/코어' };
+        document.getElementById('addTitle').innerText = `＋ [${titles[currentRoutine]}] 루틴에 운동 추가`;
+    }
+
+    // ➕ 운동 추가 시스템 (맨몸 옵션 연동)
+    function addNewWorkout() {
+        const nameInput = document.getElementById('newWorkoutName');
+        const restInput = document.getElementById('newWorkoutRest');
+        const isBodyweightCheck = document.getElementById('isBodyweight');
+        
+        if (!nameInput.value.trim()) {
+            alert('운동 이름을 입력하십시오!');
+            return;
+        }
+
+        const name = nameInput.value.trim();
+        const isHeavy = name.includes('벤치') || name.includes('스쿼트') || name.includes('데드') || name.includes('로우') || name.includes('프레스');
+        const newId = 'custom_' + Date.now();
+        
+        routineData[currentRoutine].push({
+            id: newId,
+            name: name,
+            weight: isBodyweightCheck.checked ? 0 : (isHeavy ? 40 : 10),
+            reps: 10,
+            rest: parseInt(restInput.value) || 60,
+            weightUnit: isHeavy ? 5 : 1,
+            isBodyweight: isBodyweightCheck.checked
+        });
+
+        localStorage.setItem('routine_db', JSON.stringify(routineData));
+        nameInput.value = '';
+        isBodyweightCheck.checked = false; // 체크박스 초기화
+        renderWorkouts();
+    }
+
+    // ❌ 운동 제거 시스템
+    function deleteWorkout(id) {
+        if(confirm("이 운동 종목을 현재 루틴에서 완전히 빼시겠습니까?")) {
+            routineData[currentRoutine] = routineData[currentRoutine].filter(w => w.id !== id);
+            localStorage.setItem('routine_db', JSON.stringify(routineData));
+            renderWorkouts();
+        }
     }
 
     function renderWorkouts() {
         const container = document.getElementById('workoutContainer');
         container.innerHTML = '';
 
+        if(routineData[currentRoutine].length === 0) {
+            container.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-muted); font-size:14px;">루틴이 비어있습니다. 위에서 운동을 추가하십시오!</div>`;
+            return;
+        }
+
         routineData[currentRoutine].forEach(w => {
             const card = document.createElement('div');
             card.className = 'workout-card';
 
+            // 맨몸 운동일 경우 무게 조절 UI를 지우고 '맨몸 수행'으로 표시
+            let weightSection = '';
+            if (w.isBodyweight) {
+                weightSection = `
+                    <div class="input-group">
+                        <div class="control-label">무게</div>
+                        <div class="bodyweight-display">💪 맨몸 (자체 체중)</div>
+                    </div>
+                `;
+            } else {
+                weightSection = `
+                    <div class="input-group">
+                        <div class="control-label">무게</div>
+                        <button class="counter-btn" onclick="adjustValue('${w.id}', 'weight', -${w.weightUnit})">-${w.weightUnit}</button>
+                        <div class="value-display" id="${w.id}-weight">${w.weight} kg</div>
+                        <button class="counter-btn" onclick="adjustValue('${w.id}', 'weight', ${w.weightUnit})">+${w.weightUnit}</button>
+                    </div>
+                `;
+            }
+
             card.innerHTML = `
                 <div class="workout-header">
                     <div class="workout-title">${w.name}</div>
-                    <div class="rest-input-box">
-                        <span>휴식:</span>
-                        <input type="number" class="rest-edit-input" value="${w.rest}" onchange="updateRestTime('${w.id}', this.value)">
-                        <span>초</span>
+                    <div class="header-controls">
+                        <div class="rest-input-box">
+                            <span>휴식:</span>
+                            <input type="number" class="rest-edit-input" value="${w.rest}" onchange="updateRestTime('${w.id}', this.value)">
+                            <span>초</span>
+                        </div>
+                        <button class="delete-btn" onclick="deleteWorkout('${w.id}')">제거</button>
                     </div>
                 </div>
                 
-                <div class="input-group">
-                    <div class="control-label">무게</div>
-                    <button class="counter-btn" onclick="adjustValue('${w.id}', 'weight', -${w.weightUnit})">-${w.weightUnit}</button>
-                    <div class="value-display" id="${w.id}-weight">${w.weight} kg</div>
-                    <button class="counter-btn" onclick="adjustValue('${w.id}', 'weight', ${w.weightUnit})">+${w.weightUnit}</button>
-                </div>
+                ${weightSection}
 
                 <div class="input-group">
                     <div class="control-label">횟수</div>
@@ -418,10 +568,10 @@
         });
     }
 
-    // ⏱️ 휴식 시간 데이터 실시간 반영 함수
     function updateRestTime(id, newSeconds) {
         const item = routineData[currentRoutine].find(w => w.id === id);
         item.rest = parseInt(newSeconds) || 0;
+        localStorage.setItem('routine_db', JSON.stringify(routineData));
     }
 
     function adjustValue(id, key, amount) {
@@ -429,6 +579,7 @@
         item[key] += amount;
         if(item[key] < 0) item[key] = 0;
         document.getElementById(`${id}-${key}`).innerText = item[key] + (key === 'weight' ? ' kg' : ' 회');
+        localStorage.setItem('routine_db', JSON.stringify(routineData));
     }
 
     function logSet(id, name) {
@@ -438,9 +589,12 @@
             database[selectedDateStr] = [];
         }
 
+        // 달력 기록 저장 시 맨몸 운동은 '맨몸'으로 표기되도록 분기 처리
+        const weightText = item.isBodyweight ? '맨몸' : `${item.weight}kg`;
+
         database[selectedDateStr].push({
             name: name,
-            weight: item.weight,
+            weightDisplay: weightText,
             reps: item.reps,
             time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
         });
@@ -449,7 +603,7 @@
         
         initCalendar();
         showHistoryAt(selectedDateStr);
-        startTimer(item.rest); // 수정된 휴식 시간이 여기에 바로 적용됩니다!
+        startTimer(item.rest);
     }
 
     function showHistoryAt(dateStr) {
@@ -467,7 +621,7 @@
             row.className = 'log-entry';
             row.innerHTML = `
                 <span>${log.name}</span>
-                <span style="color:var(--accent-color); font-weight:bold;">${log.weight}kg x ${log.reps}회 <small style="color:#666; font-weight:normal;">(${log.time})</small></span>
+                <span style="color:var(--accent-color); font-weight:bold;">${log.weightDisplay} x ${log.reps}회 <small style="color:#666; font-weight:normal;">(${log.time})</small></span>
             `;
             content.appendChild(row);
         });
